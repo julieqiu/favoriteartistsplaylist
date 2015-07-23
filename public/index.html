@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Playlist Maker</title>
+</head>
+<body>
+  <button id = 'login_button'>Login</button>
+  <div id="search_form">
+    Search Spotify for Artists: <br>
+    <input type="text" name="artist" id="artist_name">
+    <br><br>
+    <button id="submit-artist">Submit</button>
+    <p id="search_result"></p>
+  </div>
+  </form>
+</body>
+</html>
+
+
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<script>
+/*jshint esnext: true*/
+
+
+var credentials = getHashParams();
+var access_token = credentials.access_token;
+var searchResultsTable = {};
+var selectedArtistIds = [];
+var topTracksAllArtistsTable = [];
+var topTracksAllArtistsIds = [];
+
+
+if (access_token) {
+  $('#login_button').hide();
+  $('#search_form').show();
+} else {
+  $('#login_button').show();
+  $('#search_form').hide();
+}
+
+
+function getHashParams() {
+  var hashParams = {};
+  var e, r = /([^&;=]+)=?([^&;]*)/g,
+      q = window.location.hash.substring(1);
+  while ( e = r.exec(q)) {
+     hashParams[e[1]] = decodeURIComponent(e[2]);
+  }
+  return hashParams;
+}
+
+function loginToSpotify() {
+  var client_id = '03ffe0cac0a0401aa6673c3cf6d02ced';
+  var redirect_uri = 'http://localhost:8888/';
+  var scope = 'user-read-private user-read-email';
+
+  var url = 'https://accounts.spotify.com/authorize';
+      url += '?response_type=token';
+      url += '&client_id=' + encodeURIComponent(client_id);
+      url += '&scope=' + encodeURIComponent(scope);
+      url += '&redirect_uri=' + encodeURIComponent(redirect_uri);
+  window.location = url;
+}
+
+
+function callSpotify(url, params) {
+  return $.ajax(url, {
+    url: url,
+    dataType: 'json',
+    data: params,
+    headers: {
+      'Authorization': 'Bearer ' + access_token
+    }
+  });
+}
+
+function populateResultsTable(spotifySearchResults) {
+  for (var element of spotifySearchResults.responseJSON.artists.items) {
+    var image_url = "";
+    if (element.images[0]) {
+      image_url = element.images[0];
+    }
+    searchResultsTable[element.id] = {name : element.name, image: image_url};
+  }
+}
+
+function addToArtistIdsList(artistId) {
+   selectedArtistIds.push(artistId);
+}
+
+function getTopTracksByArtist(artistId) {
+  url = "https://api.spotify.com/v1/artists/"+artistId+"/top-tracks";
+  params = {
+    country:"US"
+  };
+  tracks = callSpotify(url, params);
+  topTracksAllArtistsTable.push(tracks);
+  return tracks;
+}
+
+function populateAllTopTracksTable(iterator, callback){
+  var currentIteration = iterator.next();
+  if (currentIteration.done === false) {
+    getTopTracksByArtist(currentIteration.value).then(populateAllTopTracksTable(iterator, callback), function() {alert("error");
+    });
+  } else {
+    callback();
+  }
+}
+
+function searchSpotify(query) {
+  url = 'https://api.spotify.com/v1/search';
+  params = {
+    q: query,
+    type: 'artist'
+  };
+  return callSpotify(url, params);
+}
+
+function test(x) {
+  populateResultsTable(x);
+  for (var item in searchResultsTable) {
+    addToArtistIdsList(item);
+  }
+  var artistIterator = makeIterator(selectedArtistIds);
+  populateAllTopTracksTable(artistIterator,
+    getAllTopTracksIds);
+
+}
+
+function makeIterator(array){
+  var nextIndex = 0;
+
+  return {
+    next: function(){
+      return nextIndex < array.length ?
+      {value: array[nextIndex++], done: false} :
+      {done : true};
+    }
+  };
+}
+
+function getAllTopTracksIds() {
+  for (var artist in topTracksAllArtistsTable) {
+    console.log(topTracksAllArtistsTable[artist].responseJSON.tracks);
+  }
+}
+
+function generateRandomPlaylist(num) {
+
+}
+
+function createPlaylist() {
+
+}
+
+document.getElementById('login_button').addEventListener('click', function(){
+    loginToSpotify();
+  });
+
+</script>
