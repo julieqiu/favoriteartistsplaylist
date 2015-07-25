@@ -90,7 +90,6 @@ function populateArtistIdTable(data) {
     }
     artistIdTable[element.id] = {name : element.name, image: image_url};
   }
-  return artistIdTable;
 }
 
 function selectArtistById(artistId) {
@@ -130,7 +129,6 @@ function populateTrackIdTable(artistId, topTracksResponseData) {
   for (var track of topTracksResponseData.tracks){
     trackIdTable[track.id] = [artistIdTable[artistId].name, track.name];
   }
-  return trackIdTable;
 }
 
 function generateRandomPlaylist(num) {
