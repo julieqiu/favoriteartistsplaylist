@@ -24,10 +24,8 @@
 
 var credentials = getHashParams();
 var access_token = credentials.access_token;
-var artistSearchResponseData;
-var artistIdNameImageTable;
+var artistIdNameImageTable = {};
 var selectedArtistIds = [];
-var artistIterator;
 var topTracksIdArtistTitleTable = {};
 
 if (access_token) {
@@ -83,23 +81,23 @@ function searchSpotifyByArtist(artist) {
   return callSpotify(url, params);
 }
 
-function processArtistSearchData(data) {
-  table = {};
+function populateArtistIdTable(data) {
+  var image_url = "";
+
   for (var element of data.artists.items) {
-    var image_url = "";
     if (element.images[0]) {
       image_url = element.images[0];
     }
-    table[element.id] = {name : element.name, image: image_url};
+    artistIdNameImageTable[element.id] = {name : element.name, image: image_url};
   }
-  return table;
+  return artistIdNameImageTable;
 }
 
 function addToArtistIdsList(artistId) {
    selectedArtistIds.push(artistId);
 }
 
-function getTopTracksByArtist(artistId) {
+function getTopTracksByArtistId(artistId) {
   url = "https://api.spotify.com/v1/artists/"+artistId+"/top-tracks";
   params = {
     country:"US"
@@ -107,37 +105,49 @@ function getTopTracksByArtist(artistId) {
   return callSpotify(url, params);
 }
 
-function populateTopTracksTable(iterator){
+function getAllTopTracksByArtist(iterator){
   var currentIteration = iterator.next();
   var artistId = currentIteration.value || "";
 
-
   if (currentIteration.done === false) {
-    getTopTracksByArtist(currentIteration.value)
+    getTopTracksByArtistId(artistId)
     .success(
-      function(data){
-        getTopTracksIds(artistId, data.tracks);
+      function(topTracksResponseData){
+        populateTopTracksIdTable(artistId, topTracksResponseData);
       }
     )
     .then(
-      populateTopTracksTable(iterator), function() {alert("error");}
+      getAllTopTracksByArtist(iterator), function() {alert("error");}
     );
   }
 }
 
+function populateTopTracksIdTable(artistId, topTracksResponseData) {
+  for (var track of topTracksResponseData.tracks){
+    topTracksIdArtistTitleTable[track.id] = [artistIdNameImageTable[artistId].name, track.name];
+  }
+}
+
+function generateRandomPlaylist(num) {
+  
+}
+
+function createPlaylist() {
+
+}
+
 function test(artist) {
   searchSpotifyByArtist(artist).success(function(data){
-    artistSearchResponseData = data;
 
-    artistIdNameImageTable = processArtistSearchData(data);
+    populateArtistIdTable(data);
 
     for (var id in artistIdNameImageTable) {
       addToArtistIdsList(id);
     }
 
-    artistIterator = makeIterator(selectedArtistIds);
+    var artistIterator = makeIterator(selectedArtistIds);
 
-    populateTopTracksTable(artistIterator);
+    getAllTopTracksByArtist(artistIterator);
   });
 }
 
@@ -151,21 +161,6 @@ function makeIterator(array){
       {done : true};
     }
   };
-}
-
-function getTopTracksIds(artistId, topTracks) {
-  for (var track of topTracks){
-    console.log(track);
-    topTracksIdArtistTitleTable[track.id] = [artistIdNameImageTable[artistId].name, track.name];
-  }
-}
-
-function generateRandomPlaylist(num) {
-  
-}
-
-function createPlaylist() {
-
 }
 
 document.getElementById('login_button').addEventListener('click', function(){
