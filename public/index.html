@@ -21,7 +21,6 @@
 <script>
 /*jshint esnext: true*/
 
-
 var credentials = getHashParams();
 var access_token = credentials.access_token;
 var artistIdTable = {};
@@ -108,7 +107,7 @@ function requestTopTracksByArtistId(artistId) {
   return callSpotify(url, params);
 }
 
-function requestTopTracks(iterator){
+function requestTopTracks(iterator, callback){
   var currentIteration = iterator.next();
   var artistId = currentIteration.value || "";
 
@@ -132,7 +131,16 @@ function populateTrackIdTable(artistId, topTracksResponseData) {
 }
 
 function generateRandomPlaylist(num) {
-  
+   var array = topTracksAllArtistsIds;
+   for (var i=array.length-1; i>0; i--) {
+     var j = Math.floor(Math.random()*(i+1));
+     var temp = array[i];
+     array[i] = array[j];
+     array[j] = temp;
+   }
+   for (var k=0; k<num && k<array.length; k++) {
+     finalPlaylist.push(array[k]);
+   }
 }
 
 function createPlaylist() {
