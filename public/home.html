@@ -58,8 +58,13 @@ function getUserId() {
 
 function loginToSpotify() {
   var client_id = '03ffe0cac0a0401aa6673c3cf6d02ced';
-  var redirect_uri = 'http://localhost:8888/';
+  var redirect_uri = 'https://fierce-harbor-2092.herokuapp.com/'
   var scope = 'playlist-read-private playlist-modify-public playlist-modify-private user-read-private user-read-email';
+    
+  if (document.location.hostname == 'localhost') {
+    redirect_uri = 'http://localhost:8888/index.html';
+  }  
+  
   var url = 'https://accounts.spotify.com/authorize';
       url += '?response_type=token';
       url += '&client_id=' + encodeURIComponent(client_id);
