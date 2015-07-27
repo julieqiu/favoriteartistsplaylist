@@ -22,9 +22,12 @@
 /*jshint esnext: true*/
 
 var credentials = getHashParams();
+var user_id = null;
 var access_token = credentials.access_token;
 var artistIdTable = {};
 var selectedArtistIds = [];
+var trackIdTable = {};
+var selectedTrackIds = [];
 
 if (access_token) {
   $('#login_button').hide();
@@ -44,11 +47,19 @@ function getHashParams() {
   return hashParams;
 }
 
+function getUserId() {
+    var url = 'https://api.spotify.com/v1/me';
+    var params = {};
+    callSpotify(url, params).success(function(user){
+      user_id = user.id;
+    })
+    ;
+}
+
 function loginToSpotify() {
   var client_id = '03ffe0cac0a0401aa6673c3cf6d02ced';
   var redirect_uri = 'http://localhost:8888/';
-  var scope = 'user-read-private user-read-email';
-
+  var scope = 'playlist-read-private playlist-modify-public playlist-modify-private user-read-private user-read-email';
   var url = 'https://accounts.spotify.com/authorize';
       url += '?response_type=token';
       url += '&client_id=' + encodeURIComponent(client_id);
@@ -61,6 +72,18 @@ function loginToSpotify() {
 function callSpotify(url, params) {
   return $.ajax(url, {
     url: url,
+    dataType: 'json',
+    data: params,
+    headers: {
+      'Authorization': 'Bearer ' + access_token
+    }
+  });
+}
+
+function postSpotify(url, params) {
+  return $.ajax(url, {
+    url: url,
+    method: "POST",
     dataType: 'json',
     data: params,
     headers: {
@@ -143,6 +166,7 @@ function generateRandomPlaylist(num) {
 
 function createPlaylist() {
 
+
 }
 
 function test(artist) {
@@ -153,7 +177,7 @@ function test(artist) {
       populateArtistIdTable(data);
 
       for (var id in artistIdTable) {
-        selectArtistById(id); 
+        selectArtistById(id);
       }
 
       var artistIterator = makeIterator(selectedArtistIds);
@@ -185,7 +209,7 @@ function getAllTopTracksIds() {
 }
 
 function generateRandomPlaylist(num) {
-   array = topTracksAllArtistsIds;
+    array = Object.keys(trackIdTable);
    for (var i=array.length-1; i>0; i--) {
      var j = Math.floor(Math.random()*(i+1));
      var temp = array[i];
@@ -194,17 +218,20 @@ function generateRandomPlaylist(num) {
    }
 
    for (var k=0; k<num && k<array.length; k++) {
-     finalPlaylist.push(array[k]);
+     selectedTrackIds.push(array[k]);
    }
 }
 
-function savePlaylist() {
-
+function createPlaylist(user_id) {
+    getUserId().success(
+      function() {
+          url = "https://api.spotify.com/v1/users/"+user_id+"/playlists";
+          postSpotify(url).success(function(data){return data;}).error(function(){alert("error");
+          });
+        }
+    );
 }
 
-function postSpotiy() {
-
-}
 
 
 document.getElementById('login_button').addEventListener('click', function(){
