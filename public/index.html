@@ -28,7 +28,7 @@ var searchResultsTable = {};
 var selectedArtistIds = [];
 var topTracksAllArtistsTable = [];
 var topTracksAllArtistsIds = [];
-
+var finalPlaylist = [];
 
 if (access_token) {
   $('#login_button').hide();
@@ -108,17 +108,19 @@ function populateAllTopTracksTable(iterator, callback){
   }
 }
 
+
 function searchSpotify(query) {
   url = 'https://api.spotify.com/v1/search';
   params = {
     q: query,
     type: 'artist'
   };
-  return callSpotify(url, params);
+  response = callSpotify(url, params);
+  return response;
 }
 
 function test(x) {
-  populateResultsTable(x);
+  searchSpotify(x);
   for (var item in searchResultsTable) {
     addToArtistIdsList(item);
   }
@@ -141,18 +143,36 @@ function makeIterator(array){
 }
 
 function getAllTopTracksIds() {
-  for (var artist in topTracksAllArtistsTable) {
-    console.log(topTracksAllArtistsTable[artist].responseJSON.tracks);
+  for (var album of topTracksAllArtistsTable) {
+    var tracks = album.responseJSON.tracks;
+    for (var track of tracks) {
+      topTracksAllArtistsIds.push(track.id);
+    }
   }
 }
 
 function generateRandomPlaylist(num) {
+   array = topTracksAllArtistsIds;
+   for (var i=array.length-1; i>0; i--) {
+     var j = Math.floor(Math.random()*(i+1));
+     var temp = array[i];
+     array[i] = array[j];
+     array[j] = temp;
+   }
+
+   for (var k=0; k<num && k<array.length; k++) {
+     finalPlaylist.push(array[k]);
+   }
+}
+
+function savePlaylist() {
 
 }
 
-function createPlaylist() {
+function postSpotiy() {
 
 }
+
 
 document.getElementById('login_button').addEventListener('click', function(){
     loginToSpotify();
